@@ -1,0 +1,41 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: intake
+      POSTGRES_PASSWORD: intake
+      POSTGRES_DB: intake
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intake"]
+      interval: 3s
+      retries: 10
+
+  api:
+    build: .
+    user: "1000:1000"  # so files written to ./data belong to you, not root
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://intake:intake@db:5432/intake
+      DATA_DIR: /data
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/code/app
+      - ./evals:/code/evals
+      - ./tests:/code/tests
+      - ./samples:/code/samples
+      - ./data:/data
+      - hfcache:/hf
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  pgdata:
+  hfcache:  # if you change the app user, run: docker volume rm document-intake-rag_hfcache

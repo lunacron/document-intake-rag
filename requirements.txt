@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+psycopg[binary]
+pgvector
+pypdf
+sentence-transformers
+presidio-analyzer
+presidio-anonymizer
+spacy
+anthropic
+pydantic-settings
